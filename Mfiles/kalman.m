@@ -1,4 +1,4 @@
-function [liki] = kalman(A,B,H,R,Se,Phi,y)
+function [liki,measurepredi,statepredi,varstatepredi] = kalman(A,B,H,R,Se,Phi,y)
 
 %==========================================================================
 %                               Kalman Filter                     
@@ -34,34 +34,44 @@ s        = zeros(T+1,n);
 P        = zeros(T+1,n,n);
 s(1,:)   = zeros(n,1)';
 
-A        = A';
-a        = inv(eye(n*n) - kron(Phi,Phi))*reshape(Se,n*n,1);
-P(1,:,:) = reshape(a,n,n); 
+a        = inv(eye(n*n) - kron(Phi,Phi))*reshape(R*Se*R',n*n,1);
+P(1,:,:) = reshape(a,n,n);
 
 % Kalman Filter Recursion
 sprime             = zeros(n,1);
 Pprime             = zeros(n,n);
-liki               = zeros(T,1);
+errorprediction    = ones(T,l);
+Varerrorprediction = ones(T,l,l);
+liki               = ones(T,1);
+measurepredi       = ones(T,l);
 
 for i=1:T
     
-  % Forecasting s(t)
-  sprime = Phi*s(i,:)';
-  Pprime = Phi*squeeze(P(i,:,:))*Phi' + Se;
+% Updating Step
 
-  % Forecasting y(t)
-  yprediction = A + B*sprime;
-  v = y(i,:)' - yprediction;
-  F = B*Pprime*B' + H;
-  
-  liki(i) = -0.5*l*log(2*pi) - 0.5*log(det(F)) - 0.5*v'*inv(F)*v;
+sprime = Phi*s(i,:)';
+Pprime = Phi*squeeze(P(i,:,:))*Phi' + R*Se*R';
 
-  % Updating Step  
-  kgain  = Pprime*B'*inv(F);
-  s(i+1,:) = (sprime + kgain*v)';
-  P(i+1,:,:) = Pprime - kgain*B*Pprime;
+% Prediction Step
 
+yprediction = A + B*sprime;
+
+v = y(i,:)' - yprediction;
+
+F = B*Pprime*B' + H;
+
+kgain    = Pprime*B'*inv(F);
+s(i+1,:) = (sprime + kgain*v)';
+P(i+1,:,:) = Pprime - kgain*B*Pprime;
+errorprediction(i,:) = v';
+Varerrorprediction(i,:,:) = F;
+liki(i) = -0.5*l*log(2*pi) - 0.5*log(det(F)) - 0.5*v'*inv(F)*v;
+measurepredi(i,:) = y(i,:)-v';
 end
 
+
+statepredi = s;
+varstatepredi = P;
  
+
 end
