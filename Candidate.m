@@ -21,6 +21,11 @@ clc
 close all
 delete *.asv
 
+global sample
+
+sample = 1;         % 1 => Old sample 1983:I - 2009:IV
+                    % 2 => New sample 1999:IV - 2019:III
+
 tic
 
 l = path;
@@ -65,7 +70,7 @@ Sigma = nhess(@objectiveunconstr,mode');
 Sigma = inv(Sigma);
 
 
-save Matfiles/MH_candidate Sigma mode 
+save Matfiles/MH_candidate Sigma mode
 
 path(l);
 

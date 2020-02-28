@@ -5,13 +5,18 @@ function [liki] = dsgeliki(para)
 %         constr: Indicator equal to 1 if parameters are constrained
 % Output= Likelihood Function
 
+global sample 
 
 [T1, TC, T0, TETA, RC, retcode] = model_solution(para);
 
 
 if retcode==0
     
-    data = load('us.txt');
+    if sample == 2
+        data = load('us_update.txt');
+    else 
+        data = load('us.txt');
+    end
  
     [A,B,H,R,Se,Phi] = sysmat(T1,T0,para);
     

@@ -19,6 +19,14 @@ clear
 close all
 delete *.asv
 
+rng(123); % for replicability of the results
+
+global sample % sample needs to be changed in ``Candidate.m"
+
+sample = 2;         % 1 => Old sample 1983:I - 2009:IV
+                    % 2 => New sample 1999:IV - 2019:III
+
+
 tic
 
 l = path;
@@ -27,7 +35,6 @@ path('Mfiles',path);
 path('Optimization Routines',path);
 path('LRE',path);
 path('Matfiles',path);
-
 
 disp('                                                                  ');
 disp('    BAYESIAN ESTIMATION OF DSGE MODEL: METROPOLIS-HASTINGS        ');
@@ -170,7 +177,10 @@ T.Properties.RowNames = parameters;
 T.Properties.VariableNames{'Var1'} = '\textbf{Mean}';
 T.Properties.VariableNames{'Var2'} = '\textbf{5th perc}';
 T.Properties.VariableNames{'Var3'} = '\textbf{95th perc}';
-table2latex(T, '/Users/Castesil/Documents/EUI/Year II - PENN/Spring 2020/Econometrics IV/PS/PS4/LaTeX/tPosteriorEstimates.tex');
+
+path = '/Users/Castesil/Documents/EUI/Year II - PENN/Spring 2020/Econometrics IV/PS/PS4/LaTeX/';
+filename = strcat('tPosteriorEstimates', num2str(sample),'.tex');
+table2latex(T, strcat(path,filename));
 
 
 %=========================================================================
@@ -210,9 +220,9 @@ set(gcf, 'PaperSize',[x y])
 set(gcf, 'PaperPosition',[xMargin yMargin xSize ySize])
 set(gcf, 'PaperOrientation','portrait')
 
-cd('/Users/Castesil/Documents/EUI/Year II - PENN/Spring 2020/Econometrics IV/PS/PS4/LaTeX/')
-saveas(gcf, 'pRecursiveAverages.pdf');
-cd('/Users/Castesil/Documents/GitHub/Econ 722 - Schorfheide/PS4/DSGE_Estimation_RWMH');
+savepath = '/Users/Castesil/Documents/EUI/Year II - PENN/Spring 2020/Econometrics IV/PS/PS4/LaTeX/';
+filename = strcat('pRecursiveAverages', num2str(sample),'.pdf');
+saveas(gcf, strcat(savepath,filename));
 
 
 %=========================================================================
@@ -246,10 +256,9 @@ set(gcf, 'PaperSize',[x y])
 set(gcf, 'PaperPosition',[xMargin yMargin xSize ySize])
 set(gcf, 'PaperOrientation','portrait')
 
-cd('/Users/Castesil/Documents/EUI/Year II - PENN/Spring 2020/Econometrics IV/PS/PS4/LaTeX/')
-saveas(gcf, 'pPosteriorMarginalDensities.pdf');
-cd('/Users/Castesil/Documents/GitHub/Econ 722 - Schorfheide/PS4/DSGE_Estimation_RWMH');
-
+savepath = '/Users/Castesil/Documents/EUI/Year II - PENN/Spring 2020/Econometrics IV/PS/PS4/LaTeX/';
+filename = strcat('pPosteriorMarginalDensities', num2str(sample),'.pdf');
+saveas(gcf, strcat(savepath,filename));
 
 
 disp('                                                                  ');
@@ -257,5 +266,4 @@ disp(['                     ELAPSED TIME:   ', num2str(toc)]             );
 
 elapsedtime=toc;
 
-path(l);
 

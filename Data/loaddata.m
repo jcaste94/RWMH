@@ -1,6 +1,6 @@
 %==========================================================================
 %                       DSGE MODEL ESTIMATION:  
-%                    Importing the data from FRED 
+%                   Importing the new data from FRED 
 %
 %
 % Author: Juan Castellanos Silván
