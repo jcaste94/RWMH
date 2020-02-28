@@ -61,6 +61,7 @@ accept        = 0;
 obj           = dsgeliki(Thetasim(1,:)) + prior(Thetasim(1,:));
 counter       = 0;
 logposterior  = obj*ones(Nsim,1);
+vAcceptanceRate = zeros(Nsim,1);
 
 for i=1:Nsim
     
@@ -103,6 +104,7 @@ for i=1:Nsim
     end  % if CheckBounds == 1
 
     acceptancerate     = accept/i;
+    vAcceptanceRate(i) = acceptancerate;
     counter            = counter + 1;
 
     if counter==500
@@ -134,9 +136,12 @@ save Matfiles/mhdraws Thetasim logposterior   % Save posterior draws
 [yy, yy05, yy95]=moment(Thetasim(:,1:13));
 
 
-
 %% description
     
+%=========================================================================
+%                TABLE 1: MEAN AND 5TH-95TH PERCENTILES 
+%=========================================================================
+
 sum_vec = [yy' yy05' yy95'];
 vartype     = {'\tau','\kappa','\psi_1','\psi_2','r^{(A)}',...
                '\pi^{(A)}','\gamma^{(Q)}',...
@@ -151,6 +156,21 @@ for hh=1:length(vartype);
         sum_vec(hh,2),sum_vec(hh,3));    
 end
 disp('========================================================================='); 
+
+% ----------------------
+% Export table to LaTeX
+% ----------------------
+parameters = {'$\tau$';'$\kappa$'; '$\psi_{1}$';'$\psi_{2}$';'$r^{(A)}$';...
+    '$\pi^{(A)}$';'$\gamma^{(Q)}$';'$\rho_{r}$';'$\rho_{g}$'; '$\rho_{z}$';...
+    '$\sigma_{r}$'; '$\sigma_{g}$'; '$\sigma_{z}$'};
+
+
+T = table(yy', yy05', yy95');
+T.Properties.RowNames = parameters;
+T.Properties.VariableNames{'Var1'} = '\textbf{Mean}';
+T.Properties.VariableNames{'Var2'} = '\textbf{5th perc}';
+T.Properties.VariableNames{'Var3'} = '\textbf{95th perc}';
+table2latex(T, '/Users/Castesil/Documents/EUI/Year II - PENN/Spring 2020/Econometrics IV/PS/PS4/LaTeX/tPosteriorEstimates.tex');
 
 
 %=========================================================================
@@ -172,10 +192,27 @@ end
 for i=1:(Npam-1)
     
 subplot((Npam-1)/3,3,i), plot(rmean(:,i),'LineStyle','-','Color','b',...
-        'LineWidth',2.5), hold on
+        'LineWidth',2.5), grid on, hold on
 title(pnames(i,:),'FontSize',12,'FontWeight','bold');    
 end
 
+x = 29.7;                  % A4 paper size
+y = 21.0;                  % A4 paper size
+xMargin = 1;               % left/right margins from page borders
+yMargin = 1;               % bottom/top margins from page borders
+xSize = x - 2*xMargin;     % figure size on paper (widht & hieght)
+ySize = y - 2*yMargin;     % figure size on paper (widht & hieght)
+
+set(gcf, 'Units','centimeters', 'Position',[0 0 xSize ySize]/2)
+
+set(gcf, 'PaperUnits','centimeters')
+set(gcf, 'PaperSize',[x y])
+set(gcf, 'PaperPosition',[xMargin yMargin xSize ySize])
+set(gcf, 'PaperOrientation','portrait')
+
+cd('/Users/Castesil/Documents/EUI/Year II - PENN/Spring 2020/Econometrics IV/PS/PS4/LaTeX/')
+saveas(gcf, 'pRecursiveAverages.pdf');
+cd('/Users/Castesil/Documents/GitHub/Econ 722 - Schorfheide/PS4/DSGE_Estimation_RWMH');
 
 
 %=========================================================================
@@ -195,12 +232,24 @@ for i=1:(Npam-1)
     grid = linspace(xmin,xmax,100);
     u    = (1+0.4)*max(ksdensity(Thetasim(:,i)));
 subplot((Npam-1)/3,3,i), plot(grid,ksdensity(Thetasim(:,i)),'LineStyle','-','Color','b',...
-        'LineWidth',2.5), hold on
+        'LineWidth',2.5), grid on, hold on
 plot([mean(Thetasim(:,i)) mean(Thetasim(:,i))], [0 u],'LineStyle',':',...
-    'Color','black','LineWidth',2.5 ), hold off
+    'Color','black','LineWidth',2.5 ), grid on, hold off
 axis([xmin xmax 0 u]);
 title(pnames(i,:),'FontSize',12,'FontWeight','bold');    
 end
+
+set(gcf, 'Units','centimeters', 'Position',[0 0 xSize ySize]/2)
+
+set(gcf, 'PaperUnits','centimeters')
+set(gcf, 'PaperSize',[x y])
+set(gcf, 'PaperPosition',[xMargin yMargin xSize ySize])
+set(gcf, 'PaperOrientation','portrait')
+
+cd('/Users/Castesil/Documents/EUI/Year II - PENN/Spring 2020/Econometrics IV/PS/PS4/LaTeX/')
+saveas(gcf, 'pPosteriorMarginalDensities.pdf');
+cd('/Users/Castesil/Documents/GitHub/Econ 722 - Schorfheide/PS4/DSGE_Estimation_RWMH');
+
 
 
 disp('                                                                  ');
@@ -209,5 +258,4 @@ disp(['                     ELAPSED TIME:   ', num2str(toc)]             );
 elapsedtime=toc;
 
 path(l);
-
 
