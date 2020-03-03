@@ -23,10 +23,6 @@ rng(123); % for replicability of the results
 
 global sample % sample needs to be changed in ``Candidate.m"
 
-sample = 2;         % 1 => Old sample 1983:I - 2009:IV
-                    % 2 => New sample 1999:IV - 2019:III
-
-
 tic
 
 l = path;
@@ -36,6 +32,17 @@ path('Optimization Routines',path);
 path('LRE',path);
 path('Matfiles',path);
 
+%=========================================================================
+%                            EXPERIMENTS
+%=========================================================================
+
+sample = 1;         % 1 => Old sample 1983:I - 2009:IV
+                    % 2 => New sample 1999:IV - 2019:III
+
+dist = 2;           % 1 => Normal distiribution
+                    % 2 => t-Student
+
+                    
 disp('                                                                  ');
 disp('    BAYESIAN ESTIMATION OF DSGE MODEL: METROPOLIS-HASTINGS        ');
 disp('                                                                  ');
@@ -53,14 +60,19 @@ disp('                                                                  ');
 
 c             = 0.2;
 c0            = 0.2;
+nu            = 10; % degrees of freedom t-Student
 Nburn         = int32(0.50*Nsim)+2;
 Thetasim      = zeros(Nsim,length(mode));
 
 % Initialize by taking a draw from a distribution centered at mode
 go_on = 0;
 while go_on == 0
-   Thetac = mvnrnd(mode',c0*Sigma);
-   go_on = (Thetac(8)<=1)*(Thetac(9)<=1)*(Thetac(10)<=1)*(Thetac(2)<=1);  % bounds
+    if dist == 1
+        Thetac = mvnrnd(mode',c0*Sigma);
+    else
+        Thetac = mvtrnd(c0*Sigma,nu) + mode;
+    end
+   go_on = (Thetac(8)<=1)*(Thetac(9)<=1)*(Thetac(10)<=1)*(Thetac(2)<=1); % bounds
 end
 Thetasim(1,:) = Thetac;
 
@@ -72,9 +84,14 @@ vAcceptanceRate = zeros(Nsim,1);
 
 for i=1:Nsim
     
-    Thetac = mvnrnd(Thetasim(i,:),c*Sigma);
+    if dist == 1
+        Thetac = mvnrnd(Thetasim(i,:),c*Sigma);
+    else
+        Thetac = mvtrnd(c*Sigma,nu) + Thetasim(i,:);
+    end
+    
     CheckBounds = (Thetac(8)<=1)*(Thetac(9)<=1)*(Thetac(10)<=1)*(Thetac(2)<=1);  % bounds
-
+    
     if CheckBounds == 1 
     
        prioc = prior(Thetac);    
@@ -148,40 +165,42 @@ save Matfiles/mhdraws Thetasim logposterior   % Save posterior draws
 %=========================================================================
 %                TABLE 1: MEAN AND 5TH-95TH PERCENTILES 
 %=========================================================================
+if dist == 1
+    
+    sum_vec = [yy' yy05' yy95'];
+    vartype     = {'\tau','\kappa','\psi_1','\psi_2','r^{(A)}',...
+                   '\pi^{(A)}','\gamma^{(Q)}',...
+                   '\rho_{r}','\rho_{g}', '\rho_{z}', ...
+                   '\sigma_{r}','\sigma_{g}', '\sigma_{z}'};
 
-sum_vec = [yy' yy05' yy95'];
-vartype     = {'\tau','\kappa','\psi_1','\psi_2','r^{(A)}',...
-               '\pi^{(A)}','\gamma^{(Q)}',...
-               '\rho_{r}','\rho_{g}', '\rho_{z}', ...
-               '\sigma_{r}','\sigma_{g}', '\sigma_{z}'};
-      
-disp('=========================================================================');
-disp(' Variable Name                       Mean         5%        95%         ');
-disp('=========================================================================');
-for hh=1:length(vartype);
-    fprintf('%-30s %10.4f %10.4f %10.4f\n',vartype{hh},sum_vec(hh,1),...
-        sum_vec(hh,2),sum_vec(hh,3));    
+    disp('=========================================================================');
+    disp(' Variable Name                       Mean         5%        95%         ');
+    disp('=========================================================================');
+    for hh=1:length(vartype);
+        fprintf('%-30s %10.4f %10.4f %10.4f\n',vartype{hh},sum_vec(hh,1),...
+            sum_vec(hh,2),sum_vec(hh,3));    
+    end
+    disp('========================================================================='); 
+
+    % ----------------------
+    % Export table to LaTeX
+    % ----------------------
+    parameters = {'$\tau$';'$\kappa$'; '$\psi_{1}$';'$\psi_{2}$';'$r^{(A)}$';...
+        '$\pi^{(A)}$';'$\gamma^{(Q)}$';'$\rho_{r}$';'$\rho_{g}$'; '$\rho_{z}$';...
+        '$\sigma_{r}$'; '$\sigma_{g}$'; '$\sigma_{z}$'};
+
+
+    T = table(yy', yy05', yy95');
+    T.Properties.RowNames = parameters;
+    T.Properties.VariableNames{'Var1'} = '\textbf{Mean}';
+    T.Properties.VariableNames{'Var2'} = '\textbf{5th perc}';
+    T.Properties.VariableNames{'Var3'} = '\textbf{95th perc}';
+
+    path = '/Users/Castesil/Documents/EUI/Year II - PENN/Spring 2020/Econometrics IV/PS/PS4/LaTeX/';
+    filename = strcat('tPosteriorEstimates', num2str(sample), num2str(dist),'.tex');
+    table2latex(T, strcat(path,filename));
+
 end
-disp('========================================================================='); 
-
-% ----------------------
-% Export table to LaTeX
-% ----------------------
-parameters = {'$\tau$';'$\kappa$'; '$\psi_{1}$';'$\psi_{2}$';'$r^{(A)}$';...
-    '$\pi^{(A)}$';'$\gamma^{(Q)}$';'$\rho_{r}$';'$\rho_{g}$'; '$\rho_{z}$';...
-    '$\sigma_{r}$'; '$\sigma_{g}$'; '$\sigma_{z}$'};
-
-
-T = table(yy', yy05', yy95');
-T.Properties.RowNames = parameters;
-T.Properties.VariableNames{'Var1'} = '\textbf{Mean}';
-T.Properties.VariableNames{'Var2'} = '\textbf{5th perc}';
-T.Properties.VariableNames{'Var3'} = '\textbf{95th perc}';
-
-path = '/Users/Castesil/Documents/EUI/Year II - PENN/Spring 2020/Econometrics IV/PS/PS4/LaTeX/';
-filename = strcat('tPosteriorEstimates', num2str(sample),'.tex');
-table2latex(T, strcat(path,filename));
-
 
 %=========================================================================
 %                  FIGURE 1: RECURSIVE AVERAGES 
@@ -205,24 +224,6 @@ subplot((Npam-1)/3,3,i), plot(rmean(:,i),'LineStyle','-','Color','b',...
         'LineWidth',2.5), grid on, hold on
 title(pnames(i,:),'FontSize',12,'FontWeight','bold');    
 end
-
-x = 29.7;                  % A4 paper size
-y = 21.0;                  % A4 paper size
-xMargin = 1;               % left/right margins from page borders
-yMargin = 1;               % bottom/top margins from page borders
-xSize = x - 2*xMargin;     % figure size on paper (widht & hieght)
-ySize = y - 2*yMargin;     % figure size on paper (widht & hieght)
-
-set(gcf, 'Units','centimeters', 'Position',[0 0 xSize ySize]/2)
-
-set(gcf, 'PaperUnits','centimeters')
-set(gcf, 'PaperSize',[x y])
-set(gcf, 'PaperPosition',[xMargin yMargin xSize ySize])
-set(gcf, 'PaperOrientation','portrait')
-
-savepath = '/Users/Castesil/Documents/EUI/Year II - PENN/Spring 2020/Econometrics IV/PS/PS4/LaTeX/';
-filename = strcat('pRecursiveAverages', num2str(sample),'.pdf');
-saveas(gcf, strcat(savepath,filename));
 
 
 %=========================================================================
@@ -249,6 +250,14 @@ axis([xmin xmax 0 u]);
 title(pnames(i,:),'FontSize',12,'FontWeight','bold');    
 end
 
+
+x = 29.7;                  % A4 paper size
+y = 21.0;                  % A4 paper size
+xMargin = 1;               % left/right margins from page borders
+yMargin = 1;               % bottom/top margins from page borders
+xSize = x - 2*xMargin;     % figure size on paper (widht & hieght)
+ySize = y - 2*yMargin;     % figure size on paper (widht & hieght)
+
 set(gcf, 'Units','centimeters', 'Position',[0 0 xSize ySize]/2)
 
 set(gcf, 'PaperUnits','centimeters')
@@ -257,7 +266,7 @@ set(gcf, 'PaperPosition',[xMargin yMargin xSize ySize])
 set(gcf, 'PaperOrientation','portrait')
 
 savepath = '/Users/Castesil/Documents/EUI/Year II - PENN/Spring 2020/Econometrics IV/PS/PS4/LaTeX/';
-filename = strcat('pPosteriorMarginalDensities', num2str(sample),'.pdf');
+filename = strcat('pPosteriorMarginalDensities', num2str(sample),num2str(dist),'.pdf');
 saveas(gcf, strcat(savepath,filename));
 
 
