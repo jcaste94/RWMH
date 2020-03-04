@@ -8,5 +8,5 @@ Bayesian estimation of the small-scale DSGE model in Chapters 4.1. and 4.2 of *H
 
 Two experiments: 
 
-- Robustness of the empirical results: change the sample. 
-- Performance of the algorithm: change the proposal distribution.
+- **Robustness of the empirical results**: change the sample. 
+- **Performance of the algorithm**: change the proposal distribution.
