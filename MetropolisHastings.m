@@ -36,7 +36,7 @@ path('Matfiles',path);
 %                            EXPERIMENTS
 %=========================================================================
 
-sample = 1;         % 1 => Old sample 1983:I - 2009:IV
+sample = 1;         % 1 => Old sample 1983:I - 2002:IV
                     % 2 => New sample 1999:IV - 2019:III
 
 dist = 2;           % 1 => Normal distiribution
